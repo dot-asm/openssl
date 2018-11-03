@@ -236,29 +236,33 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     /*
      * We do not want timing information to leak the length of k, so we
      * compute G^k using an equivalent scalar of fixed bit-length.
-     *
-     * We unconditionally perform both of these additions to prevent a
-     * small timing information leakage.  We then choose the sum that is
-     * one bit longer than the modulus.
-     *
-     * There are some concerns about the efficacy of doing this.  More
-     * specificly refer to the discussion starting with:
-     *     https://github.com/openssl/openssl/pull/7486#discussion_r228323705
-     * The fix is to rework BN so these gymnastics aren't required.
      */
-    if (!BN_add(l, k, dsa->q)
-        || !BN_add(k, l, dsa->q))
-        goto err;
-
-    BN_consttime_swap(BN_is_bit_set(l, q_bits), k, l, q_words + 2);
-
-    if ((dsa)->meth->bn_mod_exp != NULL) {
-            if (!dsa->meth->bn_mod_exp(dsa, r, dsa->g, k, dsa->p, ctx,
-                                       dsa->method_mont_p))
-                goto err;
+    if (dsa->meth->bn_mod_exp == NULL) {                /* most common case */
+        /* outcome of bn_mod_add_fixed_top is k padded to same length as q */
+        if (!bn_mod_add_fixed_top(k, k, dsa->q, dsa->q) /* can't fail */
+            ||!BN_mod_exp_mont_consttime(r, dsa->g, k, dsa->p, ctx,
+                                         dsa->method_mont_p))
+            goto err;
     } else {
-            if (!BN_mod_exp_mont(r, dsa->g, k, dsa->p, ctx, dsa->method_mont_p))
-                goto err;
+        /*
+         * We unconditionally perform both of these additions to prevent a
+         * small timing information leakage.  We then choose the sum that is
+         * one bit longer than the modulus.
+         *
+         * There are some concerns about the efficacy of doing this.  More
+         * specificly refer to the discussion starting with:
+         *     https://github.com/openssl/openssl/pull/7486#discussion_r228323705
+         * The fix is to rework BN so these gymnastics aren't required.
+         */
+        if (!BN_add(l, k, dsa->q)
+            || !BN_add(k, l, dsa->q))
+            goto err;
+
+        BN_consttime_swap(BN_is_bit_set(l, q_bits), k, l, q_words + 2);
+
+        if (!dsa->meth->bn_mod_exp(dsa, r, dsa->g, k, dsa->p, ctx,
+                                   dsa->method_mont_p))
+            goto err;
     }
 
     if (!BN_mod(r, r, dsa->q, ctx))
