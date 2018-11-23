@@ -16,6 +16,7 @@ DEPEND[sha512-586.s]=../perlasm/x86asm.pl
 GENERATE[sha1-ia64.s]=asm/sha1-ia64.pl $(LIB_CFLAGS) $(LIB_CPPFLAGS)
 GENERATE[sha256-ia64.s]=asm/sha512-ia64.pl $(LIB_CFLAGS) $(LIB_CPPFLAGS)
 GENERATE[sha512-ia64.s]=asm/sha512-ia64.pl $(LIB_CFLAGS) $(LIB_CPPFLAGS)
+GENERATE[keccak1600-ia64.S]=asm/keccak1600-ia64.pl
 
 GENERATE[sha1-alpha.S]=asm/sha1-alpha.pl $(PERLASM_SCHEME)
 
