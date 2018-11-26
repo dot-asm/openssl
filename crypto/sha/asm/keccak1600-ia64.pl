@@ -43,8 +43,8 @@ $code.=<<___;
 # define SUM	sum
 #else
 # define ADDP	add
-# define RUM	nop.m
-# define SUM	nop.m
+# define RUM	nop
+# define SUM	nop
 #endif
 
 .text
@@ -93,7 +93,7 @@ KeccakF1600_b6:
 { .mmi;	xor	$C[0]=$A[0][0],$A[1][0]
 	xor	$C[1]=$A[0][1],$A[1][1]
 	xor	$C[2]=$A[0][2],$A[1][2]		}
-{ .mmi	xor	$C[3]=$A[0][3],$A[1][3]
+{ .mmi;	xor	$C[3]=$A[0][3],$A[1][3]
 	xor	$C[4]=$A[0][4],$A[1][4]
 
 	xor	$D[0]=$A[2][0],$A[3][0]		};;
@@ -245,7 +245,7 @@ KeccakF1600_b6:
 ___
 }}}
 $code.=<<___;
-
+#if 0
 .proc	KeccakF1600#
 .align	64
 KeccakF1600:
@@ -282,10 +282,12 @@ KeccakF1600:
 	ld8	out3=[r31],16			};;
 { .mmi;	ld8	out2=[r30],16
 	ld8	out1=[r31],16			};;
-{ .mib;	ld8	out0=[r30],16
+{ .mmb;	ld8	out0=[r30],16
+	RUM	1<<1					// go little-endian
 	br.call.sptk.many	b6=KeccakF1600_b6 };;
 
-{ .mmi;	ADDP	r30=0,in0
+{ .mmi;	SUM	1<<1					// back to big-endian
+	ADDP	r30=0,in0
 	ADDP	r31=8,in0			};;
 { .mmi;	st8	[r30]=out24,16  			// store A[][]
 	st8	[r31]=out23,16  		};;
@@ -316,6 +318,7 @@ KeccakF1600:
 	mov	ar.lc=r3
 	br.ret.sptk.many	b0		};;
 .endp	KeccakF1600#
+#endif
 
 .global	SHA3_absorb#
 .proc	SHA3_absorb#
@@ -447,7 +450,7 @@ $code.=<<___;
 (p7)	br.cond.dptk	.Loop_0			};;
 
 .Ldone_absorb:
-{ .mmi;	SUM	1<<1					// restore endian-ness
+{ .mmi;	SUM	1<<1					// back to big-endian
 	ADDP	r30=0,in0
 	ADDP	r31=8,in0			};;
 { .mmi;	st8	[r30]=out24,16				// store A[][]
@@ -587,9 +590,11 @@ SHA3_squeeze:
 .Lno_short:
 { .mib;	clrrrb					};;
 { .mbb;
-(p14)	br.cond.dptk.few	.Ldone_squeeze
-(p15)	br.call.dpnt.many	b6=KeccakF1600_b6 };;
-{ .mib;	br.many			.Loop_squeeze	};;
+(p15)	RUM	1<<1					// go little-endian
+(p15)	br.call.dpnt.many	b6=KeccakF1600_b6
+(p14)	br.cond.dptk.few	.Ldone_squeeze	};;
+{ .mib;	SUM	1<<1					// back to big-endian
+	br.many			.Loop_squeeze	};;
 
 .Ldone_squeeze:
 { .mii;	mov	ar.pfs=r2
