@@ -86,8 +86,8 @@ poly1305_init:
 
 h0=r17; h1=r18; h2=r19;
 i0=r20; i1=r21;
-H0=f8;	H1=f9;  H2=f10;
-R0=f11; R1=f12; S1=f13;
+HF0=f8;	HF1=f9;  HF2=f10;
+RF0=f11; RF1=f12; SF1=f13;
 
 .global	poly1305_blocks#
 .proc	poly1305_blocks#
@@ -109,10 +109,10 @@ poly1305_blocks:
 	ld8		h1=[r9],16
 	and		r33=-8,r33		};;
 { .mmi;	ld8		h2=[r8],16
-	ldf8		R0=[r9],16
+	ldf8		RF0=[r9],16
 	shr.u		r34=r34,4		};;
-{ .mmi;	ldf8		R1=[r8],-32
-	ldf8		S1=[r9],-32
+{ .mmi;	ldf8		RF1=[r8],-32
+	ldf8		SF1=[r9],-32
 	cmp.ltu		p16,p17=1,r34		};;
 { .mmi;
 (p16)	add		r34=-2,r34
@@ -168,31 +168,31 @@ poly1305_blocks:
 { .mmi;		add		h0=h0,i0
 		add		h1=h1,i1
 		add		h2=h2,r35		};;
-{ .mmi;		setf.sig	H0=h0
+{ .mmi;		setf.sig	HF0=h0
 		cmp.ltu		p6,p0=h0,i0
 		cmp.ltu		p7,p0=h1,i1		};;
 { .mii;	(p6)	cmp.eq.or	p7,p0=-1,h1
 	(p6)	add		h1=1,h1;;
 	(p7)	add		h2=1,h2			};;
 
-{ .mmi;		setf.sig	H1=h1
-		setf.sig	H2=h2			};;
+{ .mmi;		setf.sig	HF1=h1
+		setf.sig	HF2=h2			};;
 
 { .mfi;	(p16)	ld8		r15=[r10],16
-		xmpy.lu		f32=H0,R0		}
+		xmpy.lu		f32=HF0,RF0		}
 { .mfi;	(p16)	ld8		r16=[r11],16
-		xmpy.hu		f33=H0,R0		}
-{ .mfi;		xmpy.lu		f36=H0,R1		}
-{ .mfi;		xmpy.hu		f37=H0,R1		};;
-{ .mfi;		xmpy.lu		f34=H1,S1
+		xmpy.hu		f33=HF0,RF0		}
+{ .mfi;		xmpy.lu		f36=HF0,RF1		}
+{ .mfi;		xmpy.hu		f37=HF0,RF1		};;
+{ .mfi;		xmpy.lu		f34=HF1,SF1
 	(p15)	shrp		i0=r15,r14,56		}
-{ .mfi;		xmpy.hu		f35=H1,S1		}
-{ .mfi;		xmpy.lu		f38=H1,R0
+{ .mfi;		xmpy.hu		f35=HF1,SF1		}
+{ .mfi;		xmpy.lu		f38=HF1,RF0
 	(p15)	shrp		i1=r16,r15,56		}
-{ .mfi;		xmpy.hu		f39=H1,R0		}
-{ .mfi;		xmpy.lu		f40=H2,S1
+{ .mfi;		xmpy.hu		f39=HF1,RF0		}
+{ .mfi;		xmpy.lu		f40=HF2,SF1
 	(p14)	shrp		i0=r15,r14,48		}
-{ .mfi;		xmpy.lu		f41=H2,R0		};;
+{ .mfi;		xmpy.lu		f41=HF2,RF0		};;
 
 { .mmi;		getf.sig	r22=f32
 		getf.sig	r23=f33
