@@ -84,9 +84,9 @@ poly1305_init:
 	br.ret.sptk	b0			};;
 .endp	poly1305_init#
 
-h0=r17; h1=r18; h2=r19;
-i0=r20; i1=r21;
-HF0=f8;	HF1=f9;  HF2=f10;
+h0=r17;  h1=r18;  h2=r19;
+i0=r20;  i1=r21;
+HF0=f8;  HF1=f9;  HF2=f10;
 RF0=f11; RF1=f12; SF1=f13;
 
 .global	poly1305_blocks#
@@ -142,7 +142,7 @@ poly1305_blocks:
 
 	// align first block
 	.pred.rel	"mutex",p8,p9,p10,p11,p12,p13,p14,p15
-{ .mmi	(p7)	ld8		r14=[r10],24
+{ .mmi;	(p7)	ld8		r14=[r10],24
 	(p7)	ld8		r15=[r11],24		}
 
 { .mii;	(p7)	ld8		r16=[r16]
@@ -277,11 +277,11 @@ poly1305_emit:
 
 { .mmi;	ld4		r25=[r11],8
 	ld4		r26=[r10]
-	cmp.ltu		p6,p7=-5,r16		};;
+	add		r20=5,r16		};;
 
 { .mmi;	ld4		r27=[r11]
-	add		r20=5,r16
-	shl		r25=r25,32		}
+	cmp.ltu		p6,p7=r20,r16
+	shl		r25=r25,32		};;
 { .mmi;
 (p6)	add		r21=1,r17
 (p7)	add		r21=0,r17
