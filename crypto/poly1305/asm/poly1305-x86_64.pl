@@ -2785,6 +2785,113 @@ $code.=<<___;
 .size	poly1305_init_base2_44,.-poly1305_init_base2_44
 ___
 {
+my ($h0,$h1,$h2, $d1,$d2,$d3, $r0,$r1,$s2) = map("%r$_",("dx",8..15));
+$code.=<<___;
+.type	poly1305_blocks_base2_44,\@function,4
+.align	32
+poly1305_blocks_base2_44:
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+
+	and	\$-16,$len
+	add	$inp,$len		# end of buffer
+	shl	\$40,$padbit
+	push	$len
+
+	mov	0($ctx),$h0
+	mov	8($ctx),$h1
+	mov	16($ctx),$h2
+
+	mov	40($ctx),$r0
+	mov	48($ctx),$r1
+	mov	32($ctx),$s2
+	mov	\$0xfffff00000000000,%rax
+	jmp	.Loop_base2_44
+	ud2
+
+.align	32
+.Loop_base2_44:
+	mov	0($inp),$d2
+	mov	8($inp),$d3
+	lea	16($inp),$inp
+
+	andn	$d2,%rax,$d1
+	shrd	\$44,$d3,$d2
+	add	$d1,$h0			# accumulate input
+	shr	\$24,$d3
+	andn	$d2,%rax,$d2
+	add	$padbit,$h2
+
+	add	$d2,$h1
+	add	$d3,$h2
+
+	#mov	$h0,%rdx
+	mulx	$r0,$d1,%rbx		# h0*r0
+	mulx	$r1,$d2,%rcx		# h0*r1
+	mulx	56($ctx),$d3,%rbp	# h0*r2
+
+	mov	$h1,%rdx
+	mulx	$s2,%rax,$h1		# h1*s2
+	add	%rax,$d1
+	adc	%rbx,$h1
+	mulx	$r0,%rax,%rbx		# h1*r0
+	add	%rax,$d2
+	adc	%rbx,%rcx
+	mulx	$r1,%rax,%rbx		# h1*r1
+	mov	$h2,%rdx
+	add	%rax,$d3
+	adc	%rbx,%rbp
+
+	mulx	24($ctx),%rax,%rbx	# h2*s1
+	add	%rax,$d1
+	adc	%rbx,$h1
+	mulx	$s2,%rax,$h2		# h2*s2
+	add	%rax,$d2
+	adc	%rcx,$h2
+	mulx	$r0,%rax,%rbx		# h2*r0
+	add	%rax,$d3
+	adc	%rbx,%rbp
+
+	mov	\$0xfffff00000000000,%rax
+	andn	$d1,%rax,$h0
+	shrd	\$44,$h1,$d1
+	add	$d1,$d2
+	adc	\$0,$h2
+	andn	$d2,%rax,$h1
+	shrd	\$44,$h2,$d2
+	mov	\$0x03ffffffffff,$h2
+	add	$d2,$d3
+	#?#adc	\$0,%rbp
+	and	$d3,$h2
+	shrd	\$42,%rbp,$d3
+
+	mov	\$0x10000000000,$padbit
+	lea	($d3,$d3,4),$d3		# *=5
+	add	$d3,$h0
+
+	cmp	0(%rsp),$inp
+	jb	.Loop_base2_44
+
+	mov	$h0,0($ctx)		# store hash value
+	mov	$h1,8($ctx)
+	mov	$h2,16($ctx)
+
+	mov	8(%rsp),%r15
+	mov	16(%rsp),%r14
+	mov	24(%rsp),%r13
+	mov	32(%rsp),%r12
+	mov	40(%rsp),%rbp
+	mov	48(%rsp),%rbx
+	lea	56(%rsp),%rsp
+	ret
+.size	poly1305_blocks_base2_44,.-poly1305_blocks_base2_44
+___
+}
+{
 my ($H0,$H1,$H2,$r2r1r0,$r1r0s2,$r0s2s1,$Dlo,$Dhi) = map("%ymm$_",(0..5,16,17));
 my ($T0,$inp_permd,$inp_shift,$PAD) = map("%ymm$_",(18..21));
 my ($reduc_mask,$reduc_rght,$reduc_left) = map("%ymm$_",(22..25));
