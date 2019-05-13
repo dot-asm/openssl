@@ -2748,6 +2748,7 @@ poly1305_init_base2_44:
 
 .Linit_base2_44:
 	lea	poly1305_blocks_vpmadd52(%rip),%r10
+	lea	poly1305_blocks_base2_44(%rip),%r10
 	lea	poly1305_emit_base2_44(%rip),%r11
 
 	mov	\$0x0ffffffc0fffffff,%rax
