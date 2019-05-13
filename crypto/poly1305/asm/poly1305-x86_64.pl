@@ -193,7 +193,7 @@ $code.=<<___	if ($avx>1);
 	cmovc	%rax,%r10
 ___
 $code.=<<___	if ($avx>3);
-	mov	\$`(1<<31|1<<21|1<<16)`,%rax
+	mov	\$`(1<<31|1<<21)`,%rax	# AVX512VL|AVX512IFMA
 	shr	\$32,%r9
 	and	%rax,%r9
 	cmp	%rax,%r9
@@ -2951,8 +2951,8 @@ poly1305_blocks_vpmadd52_4x:
 	vpaddq		$R2,$S2,$S2
 	vpsllq		\$2,$S2,$S2
 
-	test		\$7,$len		# is len 8*n?
-	jz		.Lblocks_vpmadd52_8x
+	#test		\$7,$len		# is len 8*n?
+	#jz		.Lblocks_vpmadd52_8x
 
 	vmovdqu64	16*0($inp),$T2		# load data
 	vmovdqu64	16*2($inp),$T3
@@ -3343,7 +3343,7 @@ poly1305_blocks_vpmadd52_4x:
 .size	poly1305_blocks_vpmadd52_4x,.-poly1305_blocks_vpmadd52_4x
 ___
 }
-{
+if (0) {
 ########################################################################
 # As implied by its name 8x subroutine processes 8 blocks in parallel...
 # This is intermediate version, as it's used only in cases when input
