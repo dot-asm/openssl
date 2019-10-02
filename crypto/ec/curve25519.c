@@ -388,7 +388,7 @@ void x25519_fe51_mul121666(fe51 h, fe51 f);
 
 typedef __uint128_t u128;
 
-static void fe51_mul(fe51 h, const fe51 f, const fe51 g)
+void fe51_mul(fe51 h, const fe51 f, const fe51 g)
 {
     u128 h0, h1, h2, h3, h4;
     uint64_t f0, f1, f2, f3, f4;
