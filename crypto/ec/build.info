@@ -23,8 +23,8 @@ IF[{- !$disabled{asm} -}]
 
   $ECASM_armv4=ecp_nistz256.c ecp_nistz256-armv4.S
   $ECDEF_armv4=ECP_NISTZ256_ASM
-  $ECASM_aarch64=ecp_nistz256.c ecp_nistz256-armv8.S
-  $ECDEF_aarch64=ECP_NISTZ256_ASM
+  $ECASM_aarch64=ecp_nistz256.c ecp_nistz256-armv8.S x25519-armv8.S
+  $ECDEF_aarch64=ECP_NISTZ256_ASM X25519_ASM
 
   $ECASM_parisc11=
   $ECASM_parisc20_64=
@@ -82,6 +82,8 @@ GENERATE[ecp_nistz256-ppc64.s]=asm/ecp_nistz256-ppc64.pl
 
 GENERATE[x25519-x86_64.s]=asm/x25519-x86_64.pl
 GENERATE[x25519-ppc64.s]=asm/x25519-ppc64.pl
+GENERATE[x25519-armv8.S]=asm/x25519-armv8.pl
+INCLUDE[x25519-armv8.o]=..
 
 INCLUDE[curve448/arch_32/f_impl.o]=curve448/arch_32 curve448
 INCLUDE[curve448/f_generic.o]=curve448/arch_32 curve448

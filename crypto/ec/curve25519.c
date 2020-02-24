@@ -20,13 +20,18 @@
 #include <openssl/sha.h>
 
 #if defined(X25519_ASM) && (defined(__x86_64) || defined(__x86_64__) || \
-                            defined(_M_AMD64) || defined(_M_X64))
+                            defined(_M_AMD64) || defined(_M_X64) || \
+                            defined(__aarch64__))
 
 # define BASE_2_64_IMPLEMENTED
 
 typedef uint64_t fe64[4];
 
+#ifdef __aarch64__
+# define x25519_fe64_eligible() (1)
+#else
 int x25519_fe64_eligible(void);
+#endif
 
 /*
  * Following subroutines perform corresponding operations modulo
