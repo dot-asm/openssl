@@ -443,7 +443,7 @@ ChaCha20_neon:
 	stp	x25,x26,[sp,#64]
 	stp	x27,x28,[sp,#80]
 	cmp	$len,#512
-	b.hs	.L512_or_more_neon
+	//b.hs	.L512_or_more_neon
 
 	sub	sp,sp,#64
 
