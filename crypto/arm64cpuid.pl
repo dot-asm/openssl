@@ -144,6 +144,32 @@ CRYPTO_memcmp:
 	lsr	w0,w0,#31
 	ret
 .size	CRYPTO_memcmp,.-CRYPTO_memcmp
+
+.globl	counter
+.type	counter,%function
+.align	4
+counter:
+.Loop:
+	add	sp,sp,#0
+	add	sp,sp,#0
+	add	sp,sp,#0
+	add	sp,sp,#0
+	add	sp,sp,#0
+	add	sp,sp,#0
+	add	sp,sp,#0
+	add	sp,sp,#0
+	add	sp,sp,#0
+	add	sp,sp,#0
+	add	sp,sp,#0
+	add	sp,sp,#0
+	add	sp,sp,#0
+	add	sp,sp,#0
+	add	sp,sp,#0
+	add	sp,sp,#0
+	subs	x0,x0,#1
+	b.ne	.Loop
+	ret
+.size	counter,.-counter
 ___
 
 print $code;

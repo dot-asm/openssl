@@ -315,7 +315,7 @@ enum {
     D_CBC_128_CML, D_CBC_192_CML, D_CBC_256_CML,
     D_EVP, D_SHA256, D_SHA512, D_WHIRLPOOL,
     D_IGE_128_AES, D_IGE_192_AES, D_IGE_256_AES,
-    D_GHASH, D_RAND, D_EVP_HMAC, D_EVP_CMAC, ALGOR_NUM 
+    D_GHASH, D_RAND, D_EVP_HMAC, D_EVP_CMAC, D_POLY1305, ALGOR_NUM
 };
 /* name of algorithms to test. MUST BE KEEP IN SYNC with above enum ! */
 static const char *names[ALGOR_NUM] = {
@@ -326,7 +326,7 @@ static const char *names[ALGOR_NUM] = {
     "camellia-128 cbc", "camellia-192 cbc", "camellia-256 cbc",
     "evp", "sha256", "sha512", "whirlpool",
     "aes-128 ige", "aes-192 ige", "aes-256 ige", "ghash",
-    "rand", "hmac", "cmac"
+    "rand", "hmac", "cmac", "poly1305"
 };
 
 /* list of configured algorithm (remaining), with some few alias */
@@ -401,7 +401,8 @@ static const OPT_PAIR doit_choices[] = {
     {"cast5", D_CBC_CAST},
 #endif
     {"ghash", D_GHASH},
-    {"rand", D_RAND}
+    {"rand", D_RAND},
+    {"poly1305", D_POLY1305}
 };
 
 static double results[ALGOR_NUM][SIZE_NUM];
@@ -604,9 +605,13 @@ static int EVP_Digest_MDC2_loop(void *args)
     int count;
 
     for (count = 0; COND(c[D_MDC2][testnum]); count++) {
+# if 1
+        counter((size_t)lengths[testnum]/16);
+# else
         if (!EVP_Digest(buf, (size_t)lengths[testnum], mdc2, NULL, EVP_mdc2(),
                         NULL))
             return -1;
+# endif
     }
     return count;
 }
@@ -732,7 +737,11 @@ static int RC4_loop(void *args)
     unsigned char *buf = tempargs->buf;
     int count;
     for (count = 0; COND(c[D_RC4][testnum]); count++)
+# if 0
         RC4(&rc4_ks, (size_t)lengths[testnum], buf, buf);
+# else
+        ChaCha20_ctr32(buf, buf, (size_t)lengths[testnum], &rc4_ks, &rc4_ks);
+# endif
     return count;
 }
 #endif
@@ -849,6 +858,19 @@ static int CRYPTO_gcm128_aad_loop(void *args)
     return count;
 }
 #endif
+
+static int Poly1305_loop(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    unsigned char *buf = tempargs->buf;
+    void *ctx = tempargs->ctx;
+    int count;
+    void Poly1305_Update(void *, const void *, size_t);
+
+    for (count = 0; COND(c[D_POLY1305][testnum]); count++)
+        Poly1305_Update(ctx, buf, lengths[testnum]);
+    return count;
+}
 
 static int RAND_bytes_loop(void *args)
 {
@@ -2062,6 +2084,7 @@ int speed_main(int argc, char **argv)
     c[D_RAND][0] = count;
     c[D_EVP_HMAC][0] = count;
     c[D_EVP_CMAC][0] = count;
+    c[D_POLY1305][0] = count;
 
     for (i = 1; i < size_num; i++) {
         long l0 = (long)lengths[0];
@@ -2082,6 +2105,7 @@ int speed_main(int argc, char **argv)
         c[D_RAND][i] = c[D_RAND][0] * 4 * l0 / l1;
         c[D_EVP_HMAC][i] = = c[D_EVP_HMAC][0] * 4 * l0 / l1;
         c[D_EVP_CMAC][i] = = c[D_EVP_CMAC][0] * 4 * l0 / l1;
+        c[D_POLY1305][i] = c[D_RAND][0] * 4 * l0 / l1;
 
         l0 = (long)lengths[i - 1];
 
@@ -2527,6 +2551,25 @@ int speed_main(int argc, char **argv)
         }
         for (i = 0; i < loopargs_len; i++)
             CRYPTO_gcm128_release(loopargs[i].gcm_ctx);
+    }
+    if (doit[D_POLY1305]) {
+        double ctx[256];
+        unsigned char key[32];
+        void Poly1305_Init(void *ctx, const void *key);
+
+        for (i = 0; i < loopargs_len; i++) {
+            loopargs[i].ctx = ctx;
+        }
+	Poly1305_Init(ctx, key);
+
+        for (testnum = 0; testnum < size_num; testnum++) {
+            print_message(names[D_POLY1305], c[D_POLY1305][testnum],
+                          lengths[testnum], seconds.sym);
+            Time_F(START);
+            count = run_benchmark(async_jobs, Poly1305_loop, loopargs);
+            d = Time_F(STOP);
+            print_result(D_POLY1305, testnum, count, d);
+        }
     }
 #endif /* OPENSSL_NO_DEPRECATED_3_0 */
 #if !defined(OPENSSL_NO_CAMELLIA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
